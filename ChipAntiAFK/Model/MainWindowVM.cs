@@ -1,4 +1,5 @@
-﻿using System.Windows.Input;
+﻿using System.Diagnostics;
+using System.Windows.Input;
 
 namespace ChipAntiAFK
 {
@@ -102,7 +103,7 @@ namespace ChipAntiAFK
             }
         }
 
-        //public ICommand DonateButtonCommand => new RelayCommand(p => true, p => Process.Start("explorer", "https://ko-fi.com/trotlinebeercan"));
+        public ICommand DonateButtonCommand => new RelayCommand(p => true, p => Process.Start("explorer", "https://ko-fi.com/trotlinebeercan"));
 
         private string _startStopButtonText;
         private string _processInfoText;
