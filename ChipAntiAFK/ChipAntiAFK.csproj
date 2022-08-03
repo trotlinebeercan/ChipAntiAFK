@@ -30,6 +30,8 @@
     <IsWebBootstrapper>false</IsWebBootstrapper>
     <UseApplicationTrust>false</UseApplicationTrust>
     <BootstrapperEnabled>true</BootstrapperEnabled>
+    <NuGetPackageImportStamp>
+    </NuGetPackageImportStamp>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -77,18 +79,25 @@
     <SignAssembly>false</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>ChipotleSigning.snk</AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>
+    </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="PresentationFramework.Aero2" />
     <Reference Include="System" />
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="System.Configuration" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Deployment" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+    <Reference Include="System.Management" />
+    <Reference Include="System.Numerics" />
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Net.Http" />
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
@@ -107,6 +116,10 @@
     </Compile>
     <Compile Include="Util\RandomNumber.cs" />
     <Compile Include="Model\RelayCommand.cs" />
+    <Page Include="UI\ChipotleUI.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
     <Page Include="UI\MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -147,7 +160,6 @@
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <None Include="ChipotleSigning.snk" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -172,5 +184,51 @@
       <Install>false</Install>
     </BootstrapperPackage>
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Costura.Fody">
+      <Version>5.7.0</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Fody">
+      <Version>6.6.0</Version>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AppCenter.Analytics">
+      <Version>4.4.0</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.AppCenter.Crashes">
+      <Version>4.4.0</Version>
+    </PackageReference>
+  </ItemGroup>
+  <PropertyGroup Label="UserDefinedVariables">
+    <!-- Get Windows SDK root folder-->
+    <WindowsKitsRoot>$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot10', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsRoot>
+    <WindowsKitsRoot Condition="'$(WindowsKitsRoot)' == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot81', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsRoot>
+    <WindowsKitsRoot Condition="'$(WindowsKitsRoot)' == ''">$([MSBuild]::GetRegistryValueFromView('HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows Kits\Installed Roots', 'KitsRoot', null, RegistryView.Registry32, RegistryView.Default))</WindowsKitsRoot>
+    <!-- Evaluates the most recent Windows SDK folder containing SignTool.exe -->
+    <!-- add new versions here, duplicating following line -->
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.18362.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.18362.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.17763.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.17763.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.17134.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.17134.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.16299.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.16299.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.15063.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.15063.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And exists('$(WindowsKitsRoot)bin\10.0.14393.0\x64\Signtool.exe')">$(WindowsKitsRoot)bin\10.0.14393.0\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == '' And '$(Platform)' == 'AnyCPU' ">$(WindowsKitsRoot)bin\x64\</SignToolFolder>
+    <SignToolFolder Condition="'$(SignToolFolder)' == ''">$(WindowsKitsRoot)bin\$(Platform)\</SignToolFolder>
+    <!-- Now we should be able to calculate SignTool.exe fullpath -->
+    <SignToolExe Condition=" '$(SignToolFolder)' != '' ">$(SignToolFolder)SignTool.exe</SignToolExe>
+  </PropertyGroup>
+  <!-- Finally, I would suggest you add the following lines to your project file because they will be quite usefull when things go wrong (and they will) -->
+  <!-- Send indivual compile bessages to MSBuild output so you check the value of each variable -->
+  <Target Name="ShowUserDefinedVariables" BeforeTargets="BeforeBuild">
+    <Message Importance="High" Text="WindowsKitsRoot = $(WindowsKitsRoot)" />
+    <Message Importance="High" Text="SignToolFolder = $(SignToolFolder)" />
+    <Message Importance="High" Text="SignToolExe = $(SignToolExe)" />
+  </Target>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>if $(ConfigurationName)==Release IF EXIST "$(SolutionDir)/Signing/signfile.bat" call "$(SolutionDir)/Signing/signfile.bat" "$(SignToolExe)" "$(TargetPath)"</PostBuildEvent>
+  </PropertyGroup>
 </Project>
